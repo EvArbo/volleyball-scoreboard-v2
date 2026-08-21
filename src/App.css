@@ -1,0 +1,592 @@
+/* ==================================================
+   1. DESIGN TOKENS
+================================================== */
+
+:root {
+    /* Colors */
+    --scoreboard-black: #111;
+    --scoreboard-white: #fff;
+    --scoreboard-yellow: #ffd400;
+
+    --team-one-color: #1f4ed8;
+    --team-two-color: #e32222;
+
+    --page-background: #f3f3f3;
+    --page-text: #111;
+    --nav-background: #f3f3f3;
+    --border-color: #111;
+
+    /* Borders */
+    --border-width: 2px;
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+
+    /* Control sizes */
+    --timer-button-width: 100px;
+    --set-button-width: 60px;
+
+    /* Layout */
+    --scoreboard-max-width: 100%;
+    --scoreboard-max-height: 100%;
+    --game-info-height: 50px;
+}
+
+
+/* ==================================================
+   2. GLOBAL RESET
+================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+
+    font-family: Arial, sans-serif;
+    color: var(--page-text);
+    background-color: var(--page-background);
+}
+
+
+/* ==================================================
+   3. PAGE LAYOUT
+================================================== */
+
+nav {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+
+    padding: var(--space-md) var(--space-lg);
+
+    background-color: var(--nav-background);
+
+    border-bottom:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+main {
+    flex: 1 0 auto;
+    display: flex;
+
+    background-color: var(--page-background);
+}
+
+
+/* ==================================================
+   4. SCOREBOARD SHELL
+================================================== */
+
+.scoreboard {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    border:
+        var(--border-width)
+        solid
+        var(--border-color);
+    background-color: var(--scoreboard-black);
+}
+
+.scoreboard > h1 {
+    text-align: center;
+}
+
+
+/* ==================================================
+   5. GAME HEADER
+================================================== */
+
+.game-info {
+    flex: 0 0 var(--game-info-height);
+
+    display: flex;
+    height: var(--game-info-height);
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+.game-info > * {
+    flex: 1 1 0;
+    min-width: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0;
+
+    border-right:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+.game-info > *:last-child {
+    border-right: none;
+}
+
+.team-name-input {
+    flex: 1 1 0;
+    min-width: 0;
+
+    width: 100%;
+    margin: 0;
+    padding: 0 var(--space-sm);
+
+    font-family: inherit;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border: none;
+    outline: none;
+}
+
+
+/* ==================================================
+   6. TIMER
+================================================== */
+
+.timer {
+    display: flex;
+    align-items: stretch;
+
+    width: 100%;
+    min-width: 0;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+}
+
+.timer-input {
+    flex: 1 1 110px;
+    min-width: 0;
+
+    padding: 0 var(--space-xs);
+
+    text-align: center;
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    font-weight: bold;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border: none;
+}
+
+.timer-toggle-button,
+.timer-reset-button {
+    flex: 0 1 var(--timer-button-width);
+    min-width: 0;
+}
+
+
+/* ==================================================
+   7. TEAM SCORE AREAS
+================================================== */
+
+.teams {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    display: flex;
+}
+
+.team {
+    flex: 1 1 0;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    border:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+.team-one {
+    background-color: var(--team-one-color);
+}
+
+.team-two {
+    background-color: var(--team-two-color);
+}
+
+.team-one button {
+    background-color: var(--team-one-color);
+}
+
+.team-two button {
+    background-color: var(--team-two-color);
+}
+
+.score-button {
+    flex: 1 0 auto;
+
+    width: 100%;
+    min-height: clamp(160px, 42dvh, 520px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: var(--space-sm);
+
+    overflow: hidden;
+
+    font-size: clamp(
+        4rem,
+        min(14vw, 24dvh),
+        10rem
+    );
+
+    line-height: 1;
+    color: var(--scoreboard-white);
+}
+
+.subtract-button {
+    flex: 0 0 auto;
+
+    min-height: 52px;
+    padding: 12px 18px;
+
+    font-size: 1.5rem;
+}
+
+
+/* ==================================================
+   8. SET SUMMARY
+================================================== */
+
+.set-summary {
+    flex: 0 0 auto;
+
+    display: flex;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+.set-control {
+    min-width: 0;
+
+    display: flex;
+    align-items: stretch;
+
+    border-right:
+        var(--border-width)
+        solid
+        var(--border-color);
+}
+
+.set-control:last-child {
+    border-right: none;
+}
+
+.set-control[data-team] {
+    flex: 1 1 0;
+}
+
+.set-control:not([data-team]) {
+    flex: 0 0 auto;
+
+    min-width: 100px;
+
+    align-items: center;
+}
+
+.set-control > p {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0;
+    padding-inline: var(--space-xs);
+
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+.set-add-button,
+.set-subtract-button {
+    flex: 0 1 var(--set-button-width);
+    width: var(--set-button-width);
+    min-width: 0;
+}
+
+.team-one-sets,
+.team-two-sets,
+.current-set {
+    margin-left: 6px;
+    color: var(--scoreboard-yellow);
+}
+
+
+/* ==================================================
+   9. ADDITIONAL FEATURES
+================================================== */
+
+.features-menu {
+    flex: 0 0 auto;
+}
+
+.auto-ruling-button.active {
+    background-color: var(--scoreboard-yellow);
+    color: var(--scoreboard-black);
+}
+
+/* Configure Rules dropdown anchor */
+.configure-rules {
+    position: relative;
+    display: inline-block;
+}
+
+/* Make it similar in size to the other feature buttons */
+.configure-rules {
+    display: inline-flex;
+}
+
+/* Hidden must override display:flex */
+.rules-menu[hidden] {
+    display: none;
+}
+
+/* Popup opens upward from Configure Rules */
+.rules-menu {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + var(--space-xs));
+
+    z-index: 10;
+
+    width: min(360px, 90vw);
+
+    display: flex;
+    flex-direction: column;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border:
+        var(--border-width)
+        solid
+        var(--scoreboard-white);
+}
+
+.rule-control {
+    display: flex;
+    align-items: stretch;
+
+    min-height: 52px;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border-bottom:
+        var(--border-width)
+        solid
+        var(--scoreboard-white);
+}
+
+.rule-control:last-child {
+    border-bottom: none;
+}
+
+.rule-control > p {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-xs);
+
+    margin: 0;
+    padding: var(--space-sm);
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+.rule-add-button,
+.rule-subtract-button {
+    flex: 0 0 var(--set-button-width);
+}
+
+@media (max-width: 600px) {
+    .rules-menu {
+        width: min(300px, 90vw);
+    }
+
+    .rule-control > p {
+        font-size: 0.9rem;
+    }
+}
+
+
+
+/* ==================================================
+   10. SHARED BUTTON BEHAVIOR
+================================================== */
+
+button {
+    cursor: pointer;
+
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+
+    color: var(--scoreboard-white);
+    background-color: var(--scoreboard-black);
+
+    border:
+        var(--border-width)
+        solid
+        var(--scoreboard-white);
+
+    transition:
+        transform 0.05s,
+        filter 0.05s;
+}
+
+button:hover {
+    filter: brightness(0.9);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+
+/* ==================================================
+   11. MOBILE PORTRAIT
+================================================== */
+
+@media (max-width: 600px) {
+    :root {
+        --timer-button-width: 64px;
+        --set-button-width: 44px;
+        --game-info-height: 54px;
+    }
+
+    nav {
+        gap: var(--space-md);
+        padding: var(--space-md);
+    }
+
+    .team-name-input {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .timer-toggle-button,
+    .timer-reset-button {
+        font-size: 0.85rem;
+    }
+
+    .team-name-input {
+        font-size: 1rem;
+        padding-inline: var(--space-xs);
+    }
+
+    .score-button {
+        min-height: clamp(280px, 55dvh, 620px);
+
+        font-size: clamp(
+            5rem,
+            min(22vw, 18dvh),
+            9rem
+        );
+    }
+
+    .set-control:not([data-team]) {
+        min-width: 70px;
+    }
+
+    .set-control > p {
+        font-size: 1rem;
+    }
+}
+
+
+/* ==================================================
+   12. SHORT LANDSCAPE SCREENS
+================================================== */
+
+@media (max-height: 600px) and (orientation: landscape) {
+    nav {
+        padding-block: var(--space-sm);
+    }
+
+    .scoreboard,
+    main {
+        min-height: calc(100dvh - 52px);
+    }
+
+    .game-info {
+        flex-basis: 54px;
+        height: 54px;
+    }
+
+    .score-button {
+        min-height: 180px;
+
+        font-size: clamp(
+            4rem,
+            min(14vw, 26dvh),
+            8rem
+        );
+    }
+
+    .subtract-button {
+        min-height: 48px;
+        padding-block: var(--space-sm);
+    }
+
+    .set-control > p {
+        font-size: 1rem;
+    }
+}
