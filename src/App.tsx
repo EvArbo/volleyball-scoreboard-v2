@@ -26,13 +26,15 @@ function App() {
       remainingSeconds: 0,
       isTimerRunning: false,
     },
-
     rules: {
         isAREnabled: false,
         setsToWin: 2,
         setLength: 25,
         lastSetLength: 25
     },
+    additionalFeatures: {
+      automaticRulesState: "Off"
+    }
   });
 
   function updateTeamName(team: TeamKey, name: string) {
@@ -98,6 +100,21 @@ function App() {
     }));
   }
 
+  function setAutomaticRulesState() {
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+
+        automaticRulesState:
+          previous.additionalFeatures.automaticRulesState === 'On'
+          ? 'Off'
+          : 'On',
+      },
+    }))
+  }
+
   return (
     <>
       <Header />
@@ -118,7 +135,10 @@ function App() {
             increaseSets={increaseSets}
             decreaseSets={decreaseSets}
           />
-          <AdditionalFeatures />
+          <AdditionalFeatures 
+            gameState={gameState}
+            setAutomaticRulesState={setAutomaticRulesState}
+          />
         </section>
       </main>
     </>

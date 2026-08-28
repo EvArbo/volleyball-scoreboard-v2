@@ -1,15 +1,31 @@
-function AdditionalFeatures() {
+import { useState } from 'react'
+import type { GameState} from "../types"
+
+type AdditionalFeaturesProps = {
+  gameState: GameState;
+  setAutomaticRulesState: () => void;
+};
+
+function AdditionalFeatures({
+    gameState,
+    setAutomaticRulesState,
+}: AdditionalFeaturesProps) {
+    const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
+    const [showConfigureRules, setShowConfigureRules] = useState(false)
+    const [showConfigureRulesAppendix, setShowConfigureRulesAppendix] = useState(false)
   return (
     <section className="additional-features">
       <button
           className="features-toggle-button"
           type="button"
           aria-expanded="false"
+          onClick={() => setShowAdditionalFeatures(!showAdditionalFeatures)}
       >
           Additional Features
       </button>
-
-      <div className="features-menu" hidden>
+      
+      {showAdditionalFeatures &&
+      <div className="features-menu">
         <button
             className="reset-scores-button"
             type="button"
@@ -27,21 +43,28 @@ function AdditionalFeatures() {
         <button
             className="auto-ruling-button"
             type="button"
+            onClick={() => {setShowConfigureRules(!showConfigureRules);
+                            setAutomaticRulesState();
+            }}
         >
+            Automatic Rules: 
+            <span className="team-one-sets">{gameState.additionalFeatures.automaticRulesState}</span>
         </button>
 
+        {showConfigureRules &&
         <div className="configure-rules">
           <button
               className="configure-rules-button"
               type="button"
               aria-expanded="false"
+              onClick={() => setShowConfigureRulesAppendix(!showConfigureRulesAppendix)}
           >
               Configure Rules ▲
           </button>
-
+          
+          {showConfigureRulesAppendix &&
           <section
               className="rules-menu"
-              hidden
           >
             <div
                 className="rule-control"
@@ -115,8 +138,11 @@ function AdditionalFeatures() {
               </button>
             </div>
           </section>
+          }
         </div>
+        }
       </div>
+      }
     </section>
   )
 }

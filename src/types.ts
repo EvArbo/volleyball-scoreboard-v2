@@ -19,9 +19,14 @@ export type Rules = {
   lastSetLength: number
 }
 
+export type AdditionalFeatures = {
+  automaticRulesState: string
+}
+
 export type GameState = {
   teamOne: Team
   teamTwo: Team
   timer: TimerState
   rules: Rules
+  additionalFeatures: AdditionalFeatures
 }
