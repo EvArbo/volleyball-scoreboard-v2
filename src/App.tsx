@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { GameState, TeamKey } from "./types"
 
 import AdditionalFeatures from "./components/AdditionalFeatures.tsx"
@@ -34,6 +34,15 @@ function App() {
       finalSetLength: 25
     }
   });
+
+  useEffect(() => {
+    console.log("something occured")
+  }, [
+    gameState.teamOne.score,
+    gameState.teamTwo.score,
+    gameState.teamOne.setsWon,
+    gameState.teamTwo.setsWon
+  ])
 
   function updateTeamName(team: TeamKey, name: string) {
     setGameState(previous => ({
