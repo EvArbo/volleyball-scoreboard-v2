@@ -12,21 +12,17 @@ export type TimerState = {
   isTimerRunning: boolean
 }
 
-export type Rules = {
+export type AdditionalFeatures = {
+  automaticRulesState: string
   isAREnabled: boolean
   setsToWin: number
   setLength: number
-  lastSetLength: number
-}
-
-export type AdditionalFeatures = {
-  automaticRulesState: string
+  finalSetLength: number
 }
 
 export type GameState = {
   teamOne: Team
   teamTwo: Team
   timer: TimerState
-  rules: Rules
   additionalFeatures: AdditionalFeatures
 }

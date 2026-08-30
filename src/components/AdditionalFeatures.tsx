@@ -4,11 +4,23 @@ import type { GameState} from "../types"
 type AdditionalFeaturesProps = {
   gameState: GameState;
   setAutomaticRulesState: () => void;
+  increaseSetsToWin: () => void;
+  decreaseSetsToWin: () => void;
+  increaseSetLength: () => void;
+  decreaseSetLength: () => void;
+  increaseFinalSetLength: () => void;
+  decreaseFinalSetLength: () => void;
 };
 
 function AdditionalFeatures({
     gameState,
     setAutomaticRulesState,
+    increaseSetsToWin,
+  decreaseSetsToWin,
+  increaseSetLength,
+  decreaseSetLength,
+  increaseFinalSetLength,
+  decreaseFinalSetLength
 }: AdditionalFeaturesProps) {
     const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
     const [showConfigureRules, setShowConfigureRules] = useState(false)
@@ -73,18 +85,20 @@ function AdditionalFeatures({
                 <button
                     className="rule-subtract-button"
                     type="button"
+                    onClick={() => decreaseSetsToWin()}
                 >
                     -
                 </button>
 
                 <p>
                     Sets to Win:
-                    <span className="sets-to-win-display"></span>
+                    <span className="sets-to-win-display">{gameState.additionalFeatures.setsToWin}</span>
                 </p>
 
                 <button
                     className="rule-add-button"
                     type="button"
+                    onClick={() => increaseSetsToWin()}
                 >
                     +
                 </button>
@@ -97,18 +111,20 @@ function AdditionalFeatures({
               <button
                   className="rule-subtract-button"
                   type="button"
+                  onClick={() => decreaseSetLength()}
               >
                   -
               </button>
 
               <p>
                   Set Length:
-                  <span className="set-length-display"></span>
+                  <span className="set-length-display">{gameState.additionalFeatures.setLength}</span>
               </p>
 
               <button
                   className="rule-add-button"
                   type="button"
+                  onClick={() => increaseSetLength()}
               >
                   +
               </button>
@@ -121,18 +137,20 @@ function AdditionalFeatures({
               <button
                   className="rule-subtract-button"
                   type="button"
+                  onClick={() => decreaseFinalSetLength()}
               >
                   -
               </button>
 
               <p>
                   Final Set Length:
-                  <span className="last-set-length-display"></span>
+                  <span className="last-set-length-display">{gameState.additionalFeatures.finalSetLength}</span>
               </p>
 
               <button
                   className="rule-add-button"
                   type="button"
+                  onClick={() => increaseFinalSetLength()}
               >
                   +
               </button>

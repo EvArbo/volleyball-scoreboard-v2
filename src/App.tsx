@@ -26,14 +26,12 @@ function App() {
       remainingSeconds: 0,
       isTimerRunning: false,
     },
-    rules: {
-        isAREnabled: false,
-        setsToWin: 2,
-        setLength: 25,
-        lastSetLength: 25
-    },
     additionalFeatures: {
-      automaticRulesState: "Off"
+      automaticRulesState: "Off",
+      isAREnabled: false,
+      setsToWin: 2,
+      setLength: 25,
+      finalSetLength: 25
     }
   });
 
@@ -115,6 +113,83 @@ function App() {
     }))
   }
 
+  function increaseSetsToWin() {
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        setsToWin: previous.additionalFeatures.setsToWin + 1,
+      },
+    }));
+  }
+
+  function decreaseSetsToWin() {
+    if (gameState.additionalFeatures.setsToWin === 0) {
+      return;
+    }
+
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        setsToWin: previous.additionalFeatures.setsToWin - 1,
+      },
+    }));
+  }
+
+    function increaseSetLength() {
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        setLength: previous.additionalFeatures.setLength + 1,
+      },
+    }));
+  }
+
+  function decreaseSetLength() {
+    if (gameState.additionalFeatures.setLength === 0) {
+      return;
+    }
+    
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        setLength: previous.additionalFeatures.setLength - 1,
+      },
+    }));
+  }
+    function increaseFinalSetLength() {
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        finalSetLength: previous.additionalFeatures.finalSetLength + 1,
+      },
+    }));
+  }
+
+  function decreaseFinalSetLength() {
+    if (gameState.additionalFeatures.finalSetLength === 0) {
+      return;
+    }
+    
+    setGameState(previous => ({
+      ...previous,
+
+      additionalFeatures: {
+        ...previous.additionalFeatures,
+        finalSetLength: previous.additionalFeatures.finalSetLength - 1,
+      },
+    }));
+  }
+
   return (
     <>
       <Header />
@@ -138,6 +213,12 @@ function App() {
           <AdditionalFeatures 
             gameState={gameState}
             setAutomaticRulesState={setAutomaticRulesState}
+            increaseSetsToWin={increaseSetsToWin}
+            decreaseSetsToWin={decreaseSetsToWin}
+            increaseSetLength={increaseSetLength}
+            decreaseSetLength={decreaseSetLength}
+            increaseFinalSetLength={increaseFinalSetLength}
+            decreaseFinalSetLength={decreaseFinalSetLength}
           />
         </section>
       </main>
