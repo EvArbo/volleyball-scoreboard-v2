@@ -36,7 +36,7 @@ function App() {
   });
 
   useEffect(() => {
-    console.log("something occured")
+    evaluateRules()
   }, [
     gameState.teamOne.score,
     gameState.teamTwo.score,
@@ -197,6 +197,73 @@ function App() {
         finalSetLength: previous.additionalFeatures.finalSetLength - 1,
       },
     }));
+  }
+
+  function getCurrentSetLength() {
+    const currentSet = 
+        gameState.teamOne.setsWon +
+        gameState.teamTwo.setsWon +
+        1;
+    const finalPossibleSet = 
+        gameState.additionalFeatures.setsToWin * 2 - 1;
+
+    if (currentSet == finalPossibleSet) {
+        return gameState.additionalFeatures.finalSetLength;
+    }
+
+    return gameState.additionalFeatures.setLength;
+}
+
+  function hasWonSet(teamScore: number, opponentScore: number) {
+    const targetScore = getCurrentSetLength();
+    if (teamScore >= targetScore && teamScore >= opponentScore + 2) {
+      return true;
+    }
+    return false;
+  }
+
+  function hasWonGame(setsWon) {
+    const targetSetsToWin = gameState.additionalFeatures.setsToWin;
+    if (setsWon >= targetSetsToWin) {
+      return true
+    }
+    return false
+  }
+
+  function endSet(winningTeamKey) {
+    gameState[winningTeamKey].setsWon +=1;
+
+    gameState.teamOne.score = 0;
+    gameState.teamTwo.score = 0;
+  }
+
+  function endGame(winningTeamKey) {
+    const winningTeamName =
+        winningTeamKey === "teamOne"
+            ? gameState.teamOne.name
+            : gameState.teamTwo.name;
+
+    alert(`${winningTeamName} won the match! 🏐`);
+}
+
+  function evaluateRules() {
+    if (gameState.additionalFeatures.automaticRulesState === "Off") {
+      return
+    }
+    const teamOneScore = gameState.teamOne.score;
+    const teamTwoScore = gameState.teamTwo.score;
+
+    if (hasWonSet(teamOneScore, teamTwoScore)) {
+        endSet("teamOne");
+        if (hasWonGame(gameState.teamOne.setsWon)) {
+          endGame("teamOne");
+        }
+    } else if (hasWonSet(teamTwoScore, teamOneScore)) {
+        endSet("teamTwo");
+        if (hasWonGame(gameState.teamTwo.setsWon)) {
+          endGame("teamTwo");
+        }
+    }
   }
 
   return (
