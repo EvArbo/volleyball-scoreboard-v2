@@ -13,7 +13,6 @@ type AdditionalFeaturesProps = {
   saveGame: () => void;
   resetScores: () => void;
   resetMatch: () => void;
-  getGame: () => void;
 };
 
 function AdditionalFeatures({
@@ -27,8 +26,7 @@ function AdditionalFeatures({
   decreaseFinalSetLength,
   saveGame,
   resetScores,
-  resetMatch,
-  getGame
+  resetMatch
 }: AdditionalFeaturesProps) {
     const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
     const [showConfigureRules, setShowConfigureRules] = useState(false)
@@ -52,14 +50,6 @@ function AdditionalFeatures({
             onClick={() => saveGame()}
         >
             Save Match
-        </button>
-
-        <button
-            className="get-game-button"
-            type="button"
-            onClick={() => getGame()}
-        >
-            Get Match
         </button>
         
         <button

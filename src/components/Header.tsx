@@ -4,8 +4,8 @@ function Header() {
   return (
     <header>
       <nav aria-label="Main navigation">
-        <a href="#">Home</a>
-        <Link to="/">Scoreboard</Link>
+        <Link to="/">Home</Link>
+        <Link to="/scoreboard">Scoreboard</Link>
         <Link to="/analytics">Analytics</Link>
         <a href="#">More</a>
       </nav>
