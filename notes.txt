@@ -1,0 +1,4 @@
+curl acts as a fack frontend where you can send http requests
+express acts as a server hosted on a port for recieving and responding to http requests
+
+react-router-dom gives REact ability to associate URL paths with components
