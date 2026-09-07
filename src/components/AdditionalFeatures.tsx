@@ -12,7 +12,8 @@ type AdditionalFeaturesProps = {
   decreaseFinalSetLength: () => void;
   saveGame: () => void;
   resetScores: () => void;
-  resetMatch: () => void;
+  requestResetMatch: () => void;
+  recordMatch: () => void;
 };
 
 function AdditionalFeatures({
@@ -26,7 +27,8 @@ function AdditionalFeatures({
   decreaseFinalSetLength,
   saveGame,
   resetScores,
-  resetMatch
+  requestResetMatch,
+  recordMatch
 }: AdditionalFeaturesProps) {
     const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
     const [showConfigureRules, setShowConfigureRules] = useState(false)
@@ -51,6 +53,26 @@ function AdditionalFeatures({
         >
             Save Match
         </button>
+
+        <button
+            className="record-match-button"
+            type="button"
+            onClick={() => {
+                const shouldReset = window.confirm(
+                    "Press 'Ok' to reset match, configure new rules, and record match stats"
+                )
+
+                if (!shouldReset) {
+                    return
+                }
+
+                recordMatch()
+                setShowConfigureRules(true)
+                setShowConfigureRulesAppendix(true)
+            }}
+        >
+            Record Match
+        </button>
         
         <button
             className="reset-scores-button"
@@ -63,7 +85,7 @@ function AdditionalFeatures({
         <button
             className="reset-match-button"
             type="button"
-            onClick={() => resetMatch()}
+            onClick={() => requestResetMatch()}
         >
             Reset Match
         </button>

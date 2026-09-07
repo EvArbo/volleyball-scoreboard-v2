@@ -27,7 +27,10 @@ app.post('/games', async (req: Request, res: Response) => {
         teamOneName,
         teamTwoName,
         teamOneSetsWon,
-        teamTwoSetsWon
+        teamTwoSetsWon,
+        date,
+        time,
+        stats
     } = req.body
 
     console.log(req.body)
@@ -38,16 +41,22 @@ app.post('/games', async (req: Request, res: Response) => {
         team_one_name,
         team_two_name,
         team_one_sets_won,
-        team_two_sets_won
+        team_two_sets_won,
+        date,
+        time,
+        stats
     )
-    VALUES ($1, $2, $3, $4)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     `,
     [
         teamOneName,
         teamTwoName,
         teamOneSetsWon,
-        teamTwoSetsWon
+        teamTwoSetsWon,
+        date,
+        time,
+        stats
     ]
     )
 
@@ -67,7 +76,10 @@ app.get('/games', async (req: Request, res: Response) => {
         team_one_name,
         team_two_name,
         team_one_sets_won,
-        team_two_sets_won
+        team_two_sets_won,
+        date,
+        time,
+        stats
         from games;
 
     `

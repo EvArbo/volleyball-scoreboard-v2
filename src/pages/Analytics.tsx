@@ -1,5 +1,5 @@
 import type { Game } from "../types"
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function Analytics() {
   const [games, setGames] = useState<Game[]>([])
@@ -31,9 +31,15 @@ function Analytics() {
       <div>
       {games.map((game) => (
         <p key={game.id}>
-          {game.team_one_name} vs {game.team_two_name}
+          {game.teamOneName} vs {game.teamTwoName}
           <br />
-          {game.team_one_sets_won} to {game.team_two_sets_won}
+          {game.teamOneSetsWon} to {game.teamTwoSetsWon}
+          <br />
+          Date: {game.date}
+          <br />
+          Time: {game.time}
+          <br />
+          Stats: {JSON.stringify(game.stats, null, 2)}
         </p>
       ))}
       </div>

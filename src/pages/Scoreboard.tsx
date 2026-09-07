@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { GameState, TeamKey } from "../types"
+import type { GameState, TeamKey, SetHistory, PointCluster } from "../types"
 
 
 import AdditionalFeatures from "../components/AdditionalFeatures.tsx"
@@ -24,14 +24,18 @@ function Scoreboard() {
         initialTimerSeconds: 0,
         remainingSeconds: 0,
         isTimerRunning: false,
-        toggleButton: "start"
+        toggleButton: "Start"
       },
       additionalFeatures: {
         automaticRulesState: "Off",
         isAREnabled: false,
         setsToWin: 2,
         setLength: 25,
-        finalSetLength: 25
+        finalSetLength: 25,
+        isMatchRecordingOn: false
+      },
+      stats: {
+        setsHistory: []
       }
     });
   
@@ -97,6 +101,8 @@ function Scoreboard() {
       gameState.timer.isTimerRunning,
       gameState.timer.remainingSeconds,
     ])
+
+    // #region GameInfo
   
     function updateTeamName(team: TeamKey, name: string) {
       setGameState(previous => ({
@@ -142,16 +148,66 @@ function Scoreboard() {
         }
       })
     }
-  
+    // #endregion
+
+    // #region Scoring
     function increaseScore(team: TeamKey) {
-      setGameState(previous => ({
-        ...previous,
+      setGameState(previous => {
+        const newState = {
+            ...previous,
   
-        [team]: {
-          ...previous[team],
-          score: previous[team].score + 1,
-        },
-      }));
+            [team]: {
+            ...previous[team],
+            score: previous[team].score + 1,
+            }
+        }
+
+        if (!previous.additionalFeatures.isMatchRecordingOn) {
+            return newState
+        }
+
+        const currentSet = previous.stats.setsHistory[previous.stats.setsHistory.length - 1]
+        const lastPointCluster = currentSet.pointsHistory[currentSet.pointsHistory.length - 1]
+        let newPointsHistory: PointCluster[]
+
+        if (lastPointCluster != null && team === lastPointCluster.team) {
+            newPointsHistory = [
+                ...currentSet.pointsHistory.slice(0, -1),
+                {
+                    ...lastPointCluster,
+                    points: lastPointCluster.points + 1
+                }
+            ]
+        } else {
+            const newPointCluster: PointCluster = {
+                        team: team,
+                        points: 1
+                    }
+            newPointsHistory = [
+                ...currentSet.pointsHistory,
+                newPointCluster
+            ]
+        }
+        const newSetsHistory = [
+            ...newState.stats.setsHistory.slice(0, -1),
+            {
+                ...currentSet,
+                pointsHistory: newPointsHistory
+            }
+        ]
+
+        console.log(newSetsHistory[newSetsHistory.length - 1].pointsHistory)
+
+        return {
+            ...newState,
+
+            stats: {
+                ...newState.stats,
+
+                setsHistory: newSetsHistory
+            }
+        }
+      });
     }
   
     function decreaseScore(team: TeamKey) {
@@ -159,14 +215,100 @@ function Scoreboard() {
         return;
       }
       
-      setGameState(previous => ({
-        ...previous,
+      setGameState(previous => {
+        const newState = {
+            ...previous,
   
-        [team]: {
-          ...previous[team],
-          score: previous[team].score - 1,
-        },
-      }));
+            [team]: {
+            ...previous[team],
+            score: previous[team].score - 1,
+            }
+        }
+
+        if (!previous.additionalFeatures.isMatchRecordingOn) {
+            return newState
+        }
+
+        const currentSet: SetHistory = previous.stats.setsHistory[previous.stats.setsHistory.length - 1]
+        let currentPointClusterIdx = 0
+        let currentPointCluster: PointCluster = {
+            team: null, points: null
+        }
+
+        for (let idx = currentSet.pointsHistory.length - 1; idx >= 0; idx--) {
+            let pointCluster = currentSet.pointsHistory[idx]
+            if (pointCluster.team === team) {
+                currentPointClusterIdx = idx
+                currentPointCluster = pointCluster
+                break
+            }
+        }
+        
+        const newPointCluster: PointCluster = {
+                ...currentPointCluster,
+                points: currentPointCluster.points - 1
+            }
+
+        let newPointsHistory: PointCluster[] = []
+        let newSetsHistory: SetHistory[] = []
+
+        if (newPointCluster.points === 0) {
+            // remove cluster, if clusters before and after currentPointCluster then merge
+            if (currentPointClusterIdx < currentSet.pointsHistory.length - 1 &&
+                currentPointClusterIdx > 0
+            ) {
+                const mergedPointCluster: PointCluster = {
+                    team: currentSet.pointsHistory[currentPointClusterIdx - 1].team,
+                    points: currentSet.pointsHistory[currentPointClusterIdx - 1].points +
+                            currentSet.pointsHistory[currentPointClusterIdx + 1].points
+                }
+                newPointsHistory = [
+                ...currentSet.pointsHistory.slice(0, currentPointClusterIdx - 1),
+                mergedPointCluster,
+                ...currentSet.pointsHistory.slice(currentPointClusterIdx + 2)
+                ]
+            } else {
+                // one or both are empty so either new set 0 0, or opponent team has 1 cluster of points
+                newPointsHistory = [
+                    ...currentSet.pointsHistory.slice(0, currentPointClusterIdx),
+                ...currentSet.pointsHistory.slice(currentPointClusterIdx + 1)
+                ]
+            }
+
+            newSetsHistory = [
+                ...newState.stats.setsHistory.slice(0, -1),
+                {
+                    ...currentSet,
+                    pointsHistory: newPointsHistory
+                }
+            ]
+            
+        } else {
+            newPointsHistory = [
+                ...currentSet.pointsHistory.slice(0, currentPointClusterIdx),
+                newPointCluster,
+                ...currentSet.pointsHistory.slice(currentPointClusterIdx + 1)
+            ]
+            newSetsHistory = [
+                ...newState.stats.setsHistory.slice(0, -1),
+                {
+                    ...currentSet,
+                    pointsHistory: newPointsHistory
+                }
+            ]
+        }
+
+        console.log(newSetsHistory[newSetsHistory.length - 1].pointsHistory)
+
+        return {
+            ...newState,
+
+            stats: {
+                ...newState.stats,
+                setsHistory: newSetsHistory
+            }
+        }
+      });
     }
   
     function resetScores() {
@@ -184,9 +326,9 @@ function Scoreboard() {
         }
       }))
     }
-  
-    function resetMatch() {
-      const shouldReset =
+
+    function requestResetMatch() {
+        const shouldReset =
         window.confirm(
           "Press 'Ok' to reset scores, sets, and timer"
         );
@@ -195,6 +337,10 @@ function Scoreboard() {
         return
       }
       
+      resetMatch()
+    }
+  
+    function resetMatch() {
       setGameState(previous => ({
         ...previous,
   
@@ -215,7 +361,7 @@ function Scoreboard() {
           initialTimerSeconds: 0,
           remainingSeconds: 0,
           isTimerRunning: false,
-          toggleButton: "start"
+          toggleButton: "Start"
         }
       }))
     }
@@ -245,6 +391,9 @@ function Scoreboard() {
         },
       }));
     }
+    // #endregion
+
+    // #region Automatic Rules
   
     function setAutomaticRulesState() {
       setGameState(previous => ({
@@ -396,11 +545,16 @@ function Scoreboard() {
       made game object to send, sent and storing response,
       once response happens data stores response, print response
       */
+    
+      const dateTime = new Date()
       const completedGame = {
         teamOneName: gameState.teamOne.name,
         teamTwoName: gameState.teamTwo.name,
         teamOneSetsWon: gameState.teamOne.setsWon,
-        teamTwoSetsWon: gameState.teamTwo.setsWon
+        teamTwoSetsWon: gameState.teamTwo.setsWon,
+        date: dateTime.toLocaleDateString(),
+        time: dateTime.toLocaleTimeString(), // need to add timezone later
+        stats: gameState.stats
       }
   
       const response = await fetch("http://localhost:3000/games", {
@@ -461,30 +615,52 @@ function Scoreboard() {
           }
       }
     }
-  
-    // function parseTimerInput(timerText) {
-    //   const parts = timerText.split(":");
-  
-    //   if (parts.length !== 2) {
-    //       return null;
-    //   }
-  
-    //   const minutes = Number(parts[0]);
-    //   const seconds = Number(parts[1]);
-  
-    //   if (
-    //       !Number.isInteger(minutes) ||
-    //       !Number.isInteger(seconds) ||
-    //       minutes < 0 ||
-    //       seconds < 0 ||
-    //       seconds > 59
-    //   ) {
-    //       return null;
-    //   }
-  
-    //   return minutes * 60 + seconds;
-    // }
-  
+
+    function recordMatch() {
+        const setOne: SetHistory = {
+                    setNumber: 1,
+                    pointsHistory: []
+                }
+
+        setGameState(previous => ({
+            ...previous,
+
+            teamOne: {
+            ...previous.teamOne,
+            score: 0,
+            setsWon: 0
+            },
+    
+            teamTwo: {
+            ...previous.teamTwo,
+            score: 0,
+            setsWon: 0
+            },
+    
+            timer: {
+            ...previous.timer,
+            initialTimerSeconds: 0,
+            remainingSeconds: 0,
+            isTimerRunning: false,
+            toggleButton: "Start"
+            },
+
+            additionalFeatures: {
+                ...previous.additionalFeatures,
+                automaticRulesState: "On",
+                isAREnabled: true,
+                isMatchRecordingOn: true
+            },
+    
+            stats: {
+                setsHistory: [setOne]
+            }
+        }));        
+    }
+
+    // #
+
+    // #region Timer
   function formatTimer(seconds) {
       const minutes = Math.floor(seconds / 60);
       const remainingSeconds = seconds % 60;
@@ -710,6 +886,8 @@ function Scoreboard() {
       }
     }
 
+    // #endregion
+
   return (
 
     <main>
@@ -743,7 +921,8 @@ function Scoreboard() {
             decreaseFinalSetLength={decreaseFinalSetLength}
             saveGame={saveGame}
             resetScores={resetScores}
-            resetMatch={resetMatch}
+            requestResetMatch={requestResetMatch}
+            recordMatch={recordMatch}
         />
         </section>
     </main>
