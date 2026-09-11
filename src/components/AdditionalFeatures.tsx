@@ -10,10 +10,11 @@ type AdditionalFeaturesProps = {
   decreaseSetLength: () => void;
   increaseFinalSetLength: () => void;
   decreaseFinalSetLength: () => void;
-  saveGame: () => void;
+  saveGame: (GameState) => void;
   resetScores: () => void;
   requestResetMatch: () => void;
   recordMatch: () => void;
+  setRecordMatchState: () => void;
 };
 
 function AdditionalFeatures({
@@ -28,7 +29,8 @@ function AdditionalFeatures({
   saveGame,
   resetScores,
   requestResetMatch,
-  recordMatch
+  recordMatch,
+  setRecordMatchState
 }: AdditionalFeaturesProps) {
     const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
     const [showConfigureRules, setShowConfigureRules] = useState(false)
@@ -49,7 +51,7 @@ function AdditionalFeatures({
         <button
             className="save-match-button"
             type="button"
-            onClick={() => saveGame()}
+            onClick={() => saveGame(gameState)}
         >
             Save Match
         </button>
@@ -58,20 +60,28 @@ function AdditionalFeatures({
             className="record-match-button"
             type="button"
             onClick={() => {
-                const shouldReset = window.confirm(
-                    "Press 'Ok' to reset match, configure new rules, and record match stats"
-                )
+                if (gameState.additionalFeatures.recordMatchState === "Off") {
+                    const shouldReset = window.confirm(
+                        "Press 'Ok' to reset match, configure new rules, and record match stats"
+                    )
 
-                if (!shouldReset) {
-                    return
+                    if (!shouldReset) {
+                        return
+                    }
+
+                    setRecordMatchState()
+                    recordMatch()
+                    setShowConfigureRules(true)
+                    setShowConfigureRulesAppendix(true)
+                } else {
+                    // toggling from "On" to "Off"
+                    setRecordMatchState()
                 }
-
-                recordMatch()
-                setShowConfigureRules(true)
-                setShowConfigureRulesAppendix(true)
+                
             }}
         >
-            Record Match
+            Record Match: 
+            <span className="record-match">{gameState.additionalFeatures.recordMatchState}</span>
         </button>
         
         <button
@@ -98,7 +108,7 @@ function AdditionalFeatures({
             }}
         >
             Automatic Rules: 
-            <span className="team-one-sets">{gameState.additionalFeatures.automaticRulesState}</span>
+            <span className="automatic-rules">{gameState.additionalFeatures.automaticRulesState}</span>
         </button>
 
         {showConfigureRules &&

@@ -32,10 +32,11 @@ function Scoreboard() {
         setsToWin: 2,
         setLength: 25,
         finalSetLength: 25,
-        isMatchRecordingOn: false
+        isMatchRecordingOn: false,
+        recordMatchState: "Off"
       },
       stats: {
-        setsHistory: []
+        setsHistory: null
       }
     });
   
@@ -409,6 +410,25 @@ function Scoreboard() {
         },
       }))
     }
+
+    function setRecordMatchState() {
+      setGameState(previous => ({
+        ...previous,
+  
+        additionalFeatures: {
+          ...previous.additionalFeatures,
+  
+          recordMatchState:
+            previous.additionalFeatures.recordMatchState === 'On'
+            ? 'Off'
+            : 'On',
+          isMatchRecordingOn:
+            previous.additionalFeatures.recordMatchState === 'On'
+            ? false
+            : true
+        },
+      }))
+    }
   
     function increaseSetsToWin() {
       setGameState(previous => ({
@@ -487,133 +507,233 @@ function Scoreboard() {
       }));
     }
   
-    function getCurrentSetLength() {
-      const currentSet = 
-          gameState.teamOne.setsWon +
-          gameState.teamTwo.setsWon +
-          1;
-      const finalPossibleSet = 
-          gameState.additionalFeatures.setsToWin * 2 - 1;
-  
-      if (currentSet == finalPossibleSet) {
-          return gameState.additionalFeatures.finalSetLength;
-      }
-  
-      return gameState.additionalFeatures.setLength;
-  }
-  
-    function hasWonSet(teamScore: number, opponentScore: number) {
-      const targetScore = getCurrentSetLength();
-      if (teamScore >= targetScore && teamScore >= opponentScore + 2) {
-        return true;
-      }
-      return false;
-    }
-  
-    function hasWonGame(setsWon) {
-      const targetSetsToWin = gameState.additionalFeatures.setsToWin;
-      if (setsWon >= targetSetsToWin) {
-        return true
-      }
-      return false
-    }
-  
-    function endSet(winningTeamKey) {
-      setGameState(previous => ({
-        ...previous,
-  
-        [winningTeamKey]: {
-          ...previous[winningTeamKey],
-          setsWon: gameState[winningTeamKey].setsWon + 1,
-        },
-  
-        teamOne: {
-          ...previous.teamOne,
-          score: 0
-        },
-  
-        teamTwo: {
-          ...previous.teamTwo,
-          score: 0
+    function getCurrentSetLength(
+        teamOneSetsWon: number,
+        teamTwoSetsWon: number,
+        setsToWin: number,
+        setLength: number,
+        finalSetLength: number
+    ) {
+        const currentSet =
+            teamOneSetsWon + teamTwoSetsWon + 1
+
+        const finalPossibleSet =
+            setsToWin * 2 - 1
+
+        if (currentSet === finalPossibleSet) {
+            return finalSetLength
         }
-  
-      }));
+
+        return setLength
     }
   
-    async function saveGame() {
-      /*
-      made game object to send, sent and storing response,
-      once response happens data stores response, print response
-      */
+    function hasWonSet(
+        teamScore: number,
+        opponentScore: number,
+        state: GameState
+    ) {
+        const targetScore = getCurrentSetLength(
+            state.teamOne.setsWon,
+            state.teamTwo.setsWon,
+            state.additionalFeatures.setsToWin,
+            state.additionalFeatures.setLength,
+            state.additionalFeatures.finalSetLength
+        )
+
+        return (
+            teamScore >= targetScore &&
+            teamScore >= opponentScore + 2
+        )
+    }
     
-      const dateTime = new Date()
-      const completedGame = {
-        teamOneName: gameState.teamOne.name,
-        teamTwoName: gameState.teamTwo.name,
-        teamOneSetsWon: gameState.teamOne.setsWon,
-        teamTwoSetsWon: gameState.teamTwo.setsWon,
-        date: dateTime.toLocaleDateString(),
-        time: dateTime.toLocaleTimeString(), // need to add timezone later
-        stats: gameState.stats
-      }
-  
-      const response = await fetch("http://localhost:3000/games", {
-        method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-        body: JSON.stringify(completedGame)
-      })
-  
-      const data = await response.json()
-  
-      console.log(data)
+    function hasWonGame(
+        setsWon: number,
+        setsToWin: number
+    ) {
+        return setsWon >= setsToWin
     }
   
-    function endGame(winningTeamKey) {
-      saveGame();
+    function endSet(
+        previous: GameState,
+        winningTeamKey: TeamKey
+    ): GameState {
+
+        const newState: GameState = {
+            ...previous,
+
+            teamOne: {
+                ...previous.teamOne,
+                score: 0,
+                setsWon:
+                    winningTeamKey === "teamOne"
+                        ? previous.teamOne.setsWon + 1
+                        : previous.teamOne.setsWon
+            },
+
+            teamTwo: {
+                ...previous.teamTwo,
+                score: 0,
+                setsWon:
+                    winningTeamKey === "teamTwo"
+                        ? previous.teamTwo.setsWon + 1
+                        : previous.teamTwo.setsWon
+            }
+        }
+
+        const matchIsOver = hasWonGame(
+            newState[winningTeamKey].setsWon,
+            newState.additionalFeatures.setsToWin
+        )
+
+        // Casual game: no history to maintain
+        if (!newState.additionalFeatures.isMatchRecordingOn) {
+            return newState
+        }
+
+        // Match finished: don't create another empty set
+        if (matchIsOver) {
+            return newState
+        }
+
+        const currentSet =
+            previous.stats.setsHistory[
+                previous.stats.setsHistory.length - 1
+            ]
+
+        const nextSet: SetHistory = {
+            setNumber: currentSet.setNumber + 1,
+            pointsHistory: []
+        }
+
+        return {
+            ...newState,
+
+            stats: {
+                ...newState.stats,
+
+                setsHistory: [
+                    ...previous.stats.setsHistory,
+                    nextSet
+                ]
+            }
+        }
+    }
   
-      const winningTeamName =
-          winningTeamKey === "teamOne"
-              ? gameState.teamOne.name
-              : gameState.teamTwo.name;
+    async function saveGame(completedState: GameState) {
+        const dateTime = new Date()
+
+        const completedGame = {
+            teamOneName: completedState.teamOne.name,
+            teamTwoName: completedState.teamTwo.name,
+            teamOneSetsWon: completedState.teamOne.setsWon,
+            teamTwoSetsWon: completedState.teamTwo.setsWon,
+            date: dateTime.toLocaleDateString(),
+            time: dateTime.toLocaleTimeString(),
+            stats: completedState.stats
+        }
+
+        const response = await fetch("http://localhost:3000/games", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(completedGame)
+        })
+
+        const data = await response.json()
+        console.log(data)
+    }
   
-      setGameState(previous => ({
-          ...previous,
-        teamOne: {
-            ...previous.teamOne,
-            score: 0,
-            setsWon: 0
-          },
-  
-          teamTwo: {
-            ...previous.teamTwo,
-            score: 0,
-            setsWon: 0
-          }
-      }));
-  
-      alert(`${winningTeamName} won the match! 🏐`);
+    function endGame(
+        winningTeamKey: TeamKey,
+        completedState: GameState
+    ) {
+        saveGame(completedState)
+
+        const winningTeamName =
+            completedState[winningTeamKey].name
+
+        setGameState({
+            ...completedState,
+
+            teamOne: {
+                ...completedState.teamOne,
+                score: 0,
+                setsWon: 0
+            },
+
+            teamTwo: {
+                ...completedState.teamTwo,
+                score: 0,
+                setsWon: 0
+            },
+
+            additionalFeatures: {
+                ...completedState.additionalFeatures,
+                isMatchRecordingOn: false
+            },
+
+            stats: {
+                setsHistory: null
+            }
+        })
+
+        alert(`${winningTeamName} won the match! 🏐`)
     }
   
     function evaluateRules() {
-      if (gameState.additionalFeatures.automaticRulesState === "Off") {
-        return
-      }
-      const teamOneScore = gameState.teamOne.score;
-      const teamTwoScore = gameState.teamTwo.score;
-  
-      if (hasWonSet(teamOneScore, teamTwoScore)) {
-          endSet("teamOne");
-          if (hasWonGame(gameState.teamOne.setsWon)) {
-            endGame("teamOne");
-          }
-      } else if (hasWonSet(teamTwoScore, teamOneScore)) {
-          endSet("teamTwo");
-          if (hasWonGame(gameState.teamTwo.setsWon)) {
-            endGame("teamTwo");
-          }
-      }
+        if (
+            gameState.additionalFeatures.automaticRulesState === "Off"
+        ) {
+            return
+        }
+
+        const teamOneScore = gameState.teamOne.score
+        const teamTwoScore = gameState.teamTwo.score
+
+        let winningTeamKey: TeamKey | null = null
+
+        if (
+            hasWonSet(
+                teamOneScore,
+                teamTwoScore,
+                gameState
+            )
+        ) {
+            winningTeamKey = "teamOne"
+
+        } else if (
+            hasWonSet(
+                teamTwoScore,
+                teamOneScore,
+                gameState
+            )
+        ) {
+            winningTeamKey = "teamTwo"
+        }
+
+        if (winningTeamKey === null) {
+            return
+        }
+
+        const completedSetState =
+            endSet(gameState, winningTeamKey)
+
+        const matchIsOver = hasWonGame(
+            completedSetState[winningTeamKey].setsWon,
+            completedSetState.additionalFeatures.setsToWin
+        )
+
+        if (matchIsOver) {
+            endGame(
+                winningTeamKey,
+                completedSetState
+            )
+
+            return
+        }
+
+        setGameState(completedSetState)
     }
 
     function recordMatch() {
@@ -923,6 +1043,7 @@ function Scoreboard() {
             resetScores={resetScores}
             requestResetMatch={requestResetMatch}
             recordMatch={recordMatch}
+            setRecordMatchState={setRecordMatchState}
         />
         </section>
     </main>
