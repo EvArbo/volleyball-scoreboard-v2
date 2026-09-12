@@ -10,15 +10,14 @@ export type TimerState = {
   initialTimerSeconds: number
   remainingSeconds: number
   isTimerRunning: boolean
-  toggleButton: string
 }
 
 export type AdditionalFeatures = {
-  automaticRulesState: string
   isAREnabled: boolean
   setsToWin: number
   setLength: number
   finalSetLength: number
+  isMatchRecordingOn: boolean
 }
 
 export type GameState = {
@@ -26,23 +25,30 @@ export type GameState = {
   teamTwo: Team
   timer: TimerState
   additionalFeatures: AdditionalFeatures
-  setHistory: SetHistory[]
+  stats: Stats
 }
 
 export type Game = {
   id: number
-  team_one_name: string
-  team_two_name: string
-  team_one_sets_won: number
-  team_two_sets_won: number
+  teamOneName: string
+  teamTwoName: string
+  teamOneSetsWon: number
+  teamTwoSetsWon: number
+  date: string
+  time: string
+  stats: Stats
 }
 
 export type PointCluster = {
   team: TeamKey
-  pointsScored: number
+  points: number
 }
 
 export type SetHistory = {
   setNumber: number
-  pointHistory: PointCluster[]
+  pointsHistory: PointCluster[]
+}
+
+export type Stats = {
+  setsHistory: SetHistory[]
 }

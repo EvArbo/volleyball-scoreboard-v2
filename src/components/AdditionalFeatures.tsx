@@ -60,7 +60,7 @@ function AdditionalFeatures({
             className="record-match-button"
             type="button"
             onClick={() => {
-                if (gameState.additionalFeatures.recordMatchState === "Off") {
+                if (!gameState.additionalFeatures.isMatchRecordingOn) {
                     const shouldReset = window.confirm(
                         "Press 'Ok' to reset match, configure new rules, and record match stats"
                     )
@@ -81,7 +81,7 @@ function AdditionalFeatures({
             }}
         >
             Record Match: 
-            <span className="record-match">{gameState.additionalFeatures.recordMatchState}</span>
+            <span className="record-match">{gameState.additionalFeatures.isMatchRecordingOn ? 'On' : 'Off'}</span>
         </button>
         
         <button
@@ -108,7 +108,7 @@ function AdditionalFeatures({
             }}
         >
             Automatic Rules: 
-            <span className="automatic-rules">{gameState.additionalFeatures.automaticRulesState}</span>
+            <span className="automatic-rules">{gameState.additionalFeatures.isAREnabled ? 'On' : 'Off'}</span>
         </button>
 
         {showConfigureRules &&

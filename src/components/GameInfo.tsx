@@ -41,7 +41,7 @@ function GameInfo({
           className="timer-toggle-button"
           type="button"
           onClick={() => changeIsTimerRunning()}
-        >{gameState.timer.toggleButton}</button>
+        >{gameState.timer.isTimerRunning ? 'Pause' : 'Start'}</button>
         
         <input
           className="timer-input"
