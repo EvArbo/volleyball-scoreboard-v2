@@ -6,6 +6,11 @@ export type Team = {
   setsWon: number
 }
 
+export type RuleKey =
+    | "setsToWin"
+    | "setLength"
+    | "finalSetLength"
+
 export type TimerState = {
   initialTimerSeconds: number
   remainingSeconds: number

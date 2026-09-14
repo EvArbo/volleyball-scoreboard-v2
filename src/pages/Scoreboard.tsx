@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { GameState, TeamKey, SetHistory, PointCluster } from "../types"
+import type { GameState, TeamKey, SetHistory, PointCluster, RuleKey } from "../types"
 
 
 import AdditionalFeatures from "../components/AdditionalFeatures.tsx"
@@ -23,20 +23,17 @@ function Scoreboard() {
       timer: {
         initialTimerSeconds: 0,
         remainingSeconds: 0,
-        isTimerRunning: false,
-        toggleButton: "Start"
+        isTimerRunning: false
       },
       additionalFeatures: {
-        automaticRulesState: "Off",
         isAREnabled: false,
         setsToWin: 2,
         setLength: 25,
         finalSetLength: 25,
-        isMatchRecordingOn: false,
-        recordMatchState: "Off"
+        isMatchRecordingOn: false
       },
       stats: {
-        setsHistory: null
+        setsHistory: []
       }
     });
   
@@ -68,8 +65,7 @@ function Scoreboard() {
               timer: {
                 ...previous.timer,
                 remainingSeconds: 0,
-                isTimerRunning: false,
-                toggleButton: "Start",
+                isTimerRunning: false
               },
             }
           }
@@ -133,8 +129,7 @@ function Scoreboard() {
             timer: {
               ...previous.timer,
               remainingSeconds: previous.timer.initialTimerSeconds,
-              isTimerRunning: true,
-              toggleButton: "Pause",
+              isTimerRunning: true
             },
           }
         }
@@ -143,8 +138,7 @@ function Scoreboard() {
           ...previous,
           timer: {
             ...previous.timer,
-            isTimerRunning: willStart,
-            toggleButton: willStart ? "Pause" : "Start",
+            isTimerRunning: willStart
           },
         }
       })
@@ -152,8 +146,7 @@ function Scoreboard() {
     // #endregion
 
     // #region Scoring
-    function increaseScore(team: TeamKey) {
-      setGameState(previous => {
+    function scorePoint(team: TeamKey, previous: GameState) {
         const newState = {
             ...previous,
   
@@ -208,15 +201,13 @@ function Scoreboard() {
                 setsHistory: newSetsHistory
             }
         }
-      });
     }
   
-    function decreaseScore(team: TeamKey) {
-      if (gameState[team].score === 0) {
-        return;
+    function removePoint(team: TeamKey, previous: GameState) {
+      if (previous[team].score === 0) {
+        return previous
       }
       
-      setGameState(previous => {
         const newState = {
             ...previous,
   
@@ -309,7 +300,18 @@ function Scoreboard() {
                 setsHistory: newSetsHistory
             }
         }
-      });
+    }
+
+    function handleScorePoint(team: TeamKey) {
+        setGameState(previous =>
+            scorePoint(team, previous)
+        )
+    }
+
+    function handleRemovePoint(team: TeamKey) {
+        setGameState(previous =>
+            removePoint(team, previous)
+        )
     }
   
     function resetScores() {
@@ -338,33 +340,40 @@ function Scoreboard() {
         return
       }
       
-      resetMatch()
+      handleResetMatch()
+    }
+
+    function handleResetMatch() {
+        setGameState(previous =>
+            resetMatch(previous)
+        )
     }
   
-    function resetMatch() {
-      setGameState(previous => ({
-        ...previous,
-  
-        teamOne: {
-          ...previous.teamOne,
-          score: 0,
-          setsWon: 0
-        },
-  
-        teamTwo: {
-          ...previous.teamTwo,
-          score: 0,
-          setsWon: 0
-        },
-  
-        timer: {
-          ...previous.timer,
-          initialTimerSeconds: 0,
-          remainingSeconds: 0,
-          isTimerRunning: false,
-          toggleButton: "Start"
+    function resetMatch(previous: GameState) {
+        const newState = {
+            ...previous,
+    
+            teamOne: {
+            ...previous.teamOne,
+            score: 0,
+            setsWon: 0
+            },
+    
+            teamTwo: {
+            ...previous.teamTwo,
+            score: 0,
+            setsWon: 0
+            },
+    
+            timer: {
+            ...previous.timer,
+            initialTimerSeconds: 0,
+            remainingSeconds: 0,
+            isTimerRunning: false
+            }
         }
-      }))
+
+        return newState
     }
   
     function increaseSets(team: TeamKey) {
@@ -396,38 +405,84 @@ function Scoreboard() {
 
     // #region Automatic Rules
   
-    function setAutomaticRulesState() {
+    function toggleAutomaticRules() {
       setGameState(previous => ({
         ...previous,
   
         additionalFeatures: {
           ...previous.additionalFeatures,
   
-          automaticRulesState:
-            previous.additionalFeatures.automaticRulesState === 'On'
-            ? 'Off'
-            : 'On',
-        },
+          isAREnabled:
+            !previous.additionalFeatures.isAREnabled
+        }
       }))
     }
 
-    function setRecordMatchState() {
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-  
-          recordMatchState:
-            previous.additionalFeatures.recordMatchState === 'On'
-            ? 'Off'
-            : 'On',
-          isMatchRecordingOn:
-            previous.additionalFeatures.recordMatchState === 'On'
-            ? false
-            : true
-        },
-      }))
+    function handleToggleRecordMatch() {
+        setGameState(previous =>
+            previous.additionalFeatures.isMatchRecordingOn
+                ? stopRecordMatch(previous)
+                : startRecordMatch(previous)
+        )
+    }
+
+    function startRecordMatch(previous: GameState) {
+        const setOne: SetHistory = {
+                    setNumber: 1,
+                    pointsHistory: []
+                }
+
+        const newState = {
+            ...previous,
+
+            teamOne: {
+            ...previous.teamOne,
+            score: 0,
+            setsWon: 0
+            },
+    
+            teamTwo: {
+            ...previous.teamTwo,
+            score: 0,
+            setsWon: 0
+            },
+    
+            timer: {
+            ...previous.timer,
+            initialTimerSeconds: 0,
+            remainingSeconds: 0,
+            isTimerRunning: false
+            },
+
+            additionalFeatures: {
+                ...previous.additionalFeatures,
+                isAREnabled: true,
+                isMatchRecordingOn: true
+            },
+    
+            stats: {
+                setsHistory: [setOne]
+            }
+        }
+
+        return newState    
+    }
+
+    function stopRecordMatch(previous: GameState) {
+        const newState = {
+            ...previous,
+
+            additionalFeatures: {
+                ...previous.additionalFeatures,
+                isMatchRecordingOn: false
+            },
+    
+            stats: {
+                setsHistory: []
+            }
+        }
+
+        return newState
     }
   
     function increaseSetsToWin() {
@@ -674,7 +729,7 @@ function Scoreboard() {
             },
 
             stats: {
-                setsHistory: null
+                setsHistory: []
             }
         })
 
@@ -683,7 +738,7 @@ function Scoreboard() {
   
     function evaluateRules() {
         if (
-            gameState.additionalFeatures.automaticRulesState === "Off"
+            !gameState.additionalFeatures.isAREnabled
         ) {
             return
         }
@@ -736,48 +791,6 @@ function Scoreboard() {
         setGameState(completedSetState)
     }
 
-    function recordMatch() {
-        const setOne: SetHistory = {
-                    setNumber: 1,
-                    pointsHistory: []
-                }
-
-        setGameState(previous => ({
-            ...previous,
-
-            teamOne: {
-            ...previous.teamOne,
-            score: 0,
-            setsWon: 0
-            },
-    
-            teamTwo: {
-            ...previous.teamTwo,
-            score: 0,
-            setsWon: 0
-            },
-    
-            timer: {
-            ...previous.timer,
-            initialTimerSeconds: 0,
-            remainingSeconds: 0,
-            isTimerRunning: false,
-            toggleButton: "Start"
-            },
-
-            additionalFeatures: {
-                ...previous.additionalFeatures,
-                automaticRulesState: "On",
-                isAREnabled: true,
-                isMatchRecordingOn: true
-            },
-    
-            stats: {
-                setsHistory: [setOne]
-            }
-        }));        
-    }
-
     // #
 
     // #region Timer
@@ -814,8 +827,7 @@ function Scoreboard() {
         updateTimerState({
           initialTimerSeconds: 0,
           remainingSeconds: 0,
-          isTimerRunning: false,
-          toggleButton: "Start",
+          isTimerRunning: false
         })
   
         return
@@ -823,8 +835,7 @@ function Scoreboard() {
   
       updateTimerState({
         remainingSeconds: gameState.timer.initialTimerSeconds,
-        isTimerRunning: false,
-        toggleButton: "Start",
+        isTimerRunning: false
       })
     }
   
@@ -964,8 +975,7 @@ function Scoreboard() {
       if (isNumberKey) {
         event.preventDefault()
         updateTimerState({
-          isTimerRunning: false,
-          toggleButton: "Start",
+          isTimerRunning: false
         })
   
         if (!isEnteringTimer.current) {
@@ -987,8 +997,7 @@ function Scoreboard() {
       if (event.key === "Backspace") {
         event.preventDefault()
         updateTimerState({
-          isTimerRunning: false,
-          toggleButton: "Start",
+          isTimerRunning: false
         })
         timerEntryDigits.current =
           timerEntryDigits.current.slice(0, -1)
@@ -1032,7 +1041,6 @@ function Scoreboard() {
         />
         <AdditionalFeatures 
             gameState={gameState}
-            setAutomaticRulesState={setAutomaticRulesState}
             increaseSetsToWin={increaseSetsToWin}
             decreaseSetsToWin={decreaseSetsToWin}
             increaseSetLength={increaseSetLength}
@@ -1042,8 +1050,8 @@ function Scoreboard() {
             saveGame={saveGame}
             resetScores={resetScores}
             requestResetMatch={requestResetMatch}
-            recordMatch={recordMatch}
-            setRecordMatchState={setRecordMatchState}
+            toggleAutomaticRules={toggleAutomaticRules}
+            toggleRecordMatch={toggleRecordMatch}
         />
         </section>
     </main>
