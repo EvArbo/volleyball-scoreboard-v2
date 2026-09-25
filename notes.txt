@@ -2,3 +2,102 @@ curl acts as a fack frontend where you can send http requests
 express acts as a server hosted on a port for recieving and responding to http requests
 
 react-router-dom gives REact ability to associate URL paths with components
+
+increaseScore
+    if Automatic Rules on (worry about if they toggle on and off during match later)
+        if same team sa last cluster
+            increment last cluster
+        else
+            create new cluster for other other and points = 1
+
+decreaseScore
+    if automatic rulse on
+        find team's most recent cluster (either last or second to last)
+        decrement their score by 1
+        if points = 0
+            remove cluster
+            combine last 2 clusters together (do we need to recheck if someone won if its overtime?)
+
+MATCH INVARIANTS
+
+1. If isMatchRecording === true:
+   stats.setsHistory must contain at least the current set.
+
+2. If isMatchRecording === false:
+   stats contains no active match history.
+
+3. team score >= 0.
+
+4. setsWon >= 0.
+
+5. A finished set has both team scores reset to 0.
+
+6. There is exactly one current SetHistory while recording.
+
+7. A new SetHistory is created after a set ends,
+   unless the match has ended.
+
+8. Automatic rules being disabled means score changes
+   cannot automatically end a set.
+
+9. Ending/resetting a match leaves the application in
+   one known initial-match state.
+
+10. Display text such as "On"/"Off" or "Start"/"Pause"
+    is derived from boolean state rather than stored separately.
+
+
+ Start casual match → scores/sets/stats are clean.
+ Casual score +1 → score changes, stats remain empty.
+ Casual score -1 at 0 → nothing changes.
+ Start recorded match → scores/sets reset, automatic rules enabled, Set 1 history exists.
+ Recorded score +1 → score and point history both change.
+ Recorded score -1 → score and corresponding point history both reverse correctly.
+ Recorded point clusters merge correctly after removing a middle cluster.
+ End recorded set → score resets, winner gains one set, next SetHistory is created.
+ End final set → winner gains final set, no extra empty set is created, saved data reflects completed match.
+ Stop recording → recording is false and no stale statistics remain.
+ Start recording again → old statistics do not reappear.
+ Reset match during casual play → all match state resets.
+ Reset match during recording → behavior matches the rule you choose.
+ Reset scores during recording → statistics remain consistent with displayed score.
+ Manually increase/decrease sets during recording → either prohibited or history remains consistent.
+ Change set length during a match → automatic-rules behavior is explicitly defined.
+ Change sets-to-win during a match → match-end behavior is explicitly defined.
+ Automatic rules Off → scoring never automatically ends a set.
+ Automatic rules On → qualifying score ends exactly one set.
+ Winner popup uses current editable team name.
+ Saved payload contains stats only when appropriate.
+ New match starts from one canonical initial state.
+
+ First remove duplicated state → then define invariants → then create pure transition functions →
+ then move those transitions behind a reducer → then write tests.
+
+Single source of truth	⚠️	Remove duplicate On/Off strings and timer label
+Explicit transitions	⚠️	Replace overlapping setters with named match actions
+Invariants	⚠️	Define them formally
+Duplicate derived state	❌	Remove recordMatchState, automaticRulesState, toggleButton
+Pure domain functions	🟢 Improving	Continue pattern used by endSet()
+Side-effect separation	⚠️	Split state calculation from save/audio/alert
+Stats consistency	❌	Centralize all score/set/reset mutations
+Automatic rules	⚠️	Move away from effect-driven implicit behavior
+Testability	⚠️	Move domain logic into pure functions
+Scale readiness	🟡	A reducer would move this toward green
+
+Function	Ideal type
+getCurrentSetLength	pure
+hasWonSet	pure
+hasWonGame	pure
+endSet	pure transition
+startRecordMatch	pure transition
+stopRecordMatch	pure transition
+scorePoint	pure transition
+removePoint	pure transition
+resetMatchState	pure transition
+finishMatchState	pure transition
+buildGamePayload	pure
+saveGame	side effect
+playTimerSound	side effect
+stopTimerSound	side effect
+alert/winner popup	side effect
+setGameState wrappers	React wiring

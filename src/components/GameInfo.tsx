@@ -2,7 +2,7 @@ import type { GameState, TeamKey } from "../types"
 
 type GameInfoProps = {
   gameState: GameState;
-  updateTeamName: (team: TeamKey, name: string) => void;
+  handleUpdateTeamName: (team: TeamKey, name: string) => void;
   changeIsTimerRunning: () => void;
   formatTimer: (seconds) => string;
   resetTimer: () => void;
@@ -19,7 +19,7 @@ function handleEnterKey(
 
 function GameInfo({
     gameState,
-    updateTeamName,
+    handleUpdateTeamName,
     changeIsTimerRunning,
     formatTimer,
     resetTimer,
@@ -33,7 +33,7 @@ function GameInfo({
         type="text"
         value={gameState.teamOne.name}
         maxLength={15}
-        onChange={(event) => updateTeamName("teamOne", event.target.value)}
+        onChange={(event) => handleUpdateTeamName("teamOne", event.target.value)}
         onKeyDown={handleEnterKey}
       />
       <section className="timer">
@@ -71,7 +71,7 @@ function GameInfo({
         type="text"
         value={gameState.teamTwo.name}
         maxLength={15}
-        onChange={(event) => updateTeamName("teamTwo", event.target.value)}
+        onChange={(event) => handleUpdateTeamName("teamTwo", event.target.value)}
         onKeyDown={handleEnterKey}
       />
     </section>

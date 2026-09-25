@@ -3,34 +3,34 @@ import type { GameState} from "../types"
 
 type AdditionalFeaturesProps = {
   gameState: GameState;
-  setAutomaticRulesState: () => void;
-  increaseSetsToWin: () => void;
-  decreaseSetsToWin: () => void;
-  increaseSetLength: () => void;
-  decreaseSetLength: () => void;
-  increaseFinalSetLength: () => void;
-  decreaseFinalSetLength: () => void;
+  handleToggleAutomaticRules: () => void;
+  handleIncreaseSetsToWin: () => void;
+  handleDecreaseSetsToWin: () => void;
+  handleIncreaseSetLength: () => void;
+  handleDecreaseSetLength: () => void;
+  handleIncreaseFinalSetLength: () => void;
+  handleDecreaseFinalSetLength: () => void;
   saveGame: (GameState) => void;
-  resetScores: () => void;
+  handleResetCurrentSet: () => void;
   requestResetMatch: () => void;
-  recordMatch: () => void;
-  setRecordMatchState: () => void;
+  handleStartRecordMatch: () => void;
+  handleStopRecordMatch: () => void;
 };
 
 function AdditionalFeatures({
     gameState,
-    setAutomaticRulesState,
-    increaseSetsToWin,
-  decreaseSetsToWin,
-  increaseSetLength,
-  decreaseSetLength,
-  increaseFinalSetLength,
-  decreaseFinalSetLength,
-  saveGame,
-  resetScores,
-  requestResetMatch,
-  recordMatch,
-  setRecordMatchState
+    handleToggleAutomaticRules,
+    handleIncreaseSetsToWin,
+    handleDecreaseSetsToWin,
+    handleIncreaseSetLength,
+    handleDecreaseSetLength,
+    handleIncreaseFinalSetLength,
+    handleDecreaseFinalSetLength,
+    saveGame,
+    handleResetCurrentSet,
+    requestResetMatch,
+    handleStartRecordMatch,
+    handleStopRecordMatch
 }: AdditionalFeaturesProps) {
     const [showAdditionalFeatures, setShowAdditionalFeatures] = useState(false)
     const [showConfigureRules, setShowConfigureRules] = useState(false)
@@ -69,15 +69,15 @@ function AdditionalFeatures({
                         return
                     }
 
-                    setRecordMatchState()
-                    recordMatch()
+                    handleStartRecordMatch()
                     setShowConfigureRules(true)
                     setShowConfigureRulesAppendix(true)
                 } else {
                     // toggling from "On" to "Off"
-                    setRecordMatchState()
+                    handleStopRecordMatch()
+                    setShowConfigureRules(false)
+                    setShowConfigureRulesAppendix(false)
                 }
-                
             }}
         >
             Record Match: 
@@ -87,7 +87,7 @@ function AdditionalFeatures({
         <button
             className="reset-scores-button"
             type="button"
-            onClick={() => resetScores()}
+            onClick={() => handleResetCurrentSet()}
         >
             Reset Scores
         </button>
@@ -104,7 +104,7 @@ function AdditionalFeatures({
             className="auto-ruling-button"
             type="button"
             onClick={() => {setShowConfigureRules(!showConfigureRules);
-                            setAutomaticRulesState();
+                            handleToggleAutomaticRules();
             }}
         >
             Automatic Rules: 
@@ -133,7 +133,7 @@ function AdditionalFeatures({
                 <button
                     className="rule-subtract-button"
                     type="button"
-                    onClick={() => decreaseSetsToWin()}
+                    onClick={() => handleDecreaseSetsToWin()}
                 >
                     -
                 </button>
@@ -146,7 +146,7 @@ function AdditionalFeatures({
                 <button
                     className="rule-add-button"
                     type="button"
-                    onClick={() => increaseSetsToWin()}
+                    onClick={() => handleIncreaseSetsToWin()}
                 >
                     +
                 </button>
@@ -159,7 +159,7 @@ function AdditionalFeatures({
               <button
                   className="rule-subtract-button"
                   type="button"
-                  onClick={() => decreaseSetLength()}
+                  onClick={() => handleDecreaseSetLength()}
               >
                   -
               </button>
@@ -172,7 +172,7 @@ function AdditionalFeatures({
               <button
                   className="rule-add-button"
                   type="button"
-                  onClick={() => increaseSetLength()}
+                  onClick={() => handleIncreaseSetLength()}
               >
                   +
               </button>
@@ -185,7 +185,7 @@ function AdditionalFeatures({
               <button
                   className="rule-subtract-button"
                   type="button"
-                  onClick={() => decreaseFinalSetLength()}
+                  onClick={() => handleDecreaseFinalSetLength()}
               >
                   -
               </button>
@@ -198,7 +198,7 @@ function AdditionalFeatures({
               <button
                   className="rule-add-button"
                   type="button"
-                  onClick={() => increaseFinalSetLength()}
+                  onClick={() => handleIncreaseFinalSetLength()}
               >
                   +
               </button>

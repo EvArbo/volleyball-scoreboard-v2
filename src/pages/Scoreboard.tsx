@@ -100,16 +100,29 @@ function Scoreboard() {
     ])
 
     // #region GameInfo
+
+    function handleUpdateTeamName(
+        team: TeamKey,
+        name: string
+    ) {
+        setGameState(previous =>
+            updateTeamName(previous, team, name)
+        )
+    }
   
-    function updateTeamName(team: TeamKey, name: string) {
-      setGameState(previous => ({
-        ...previous,
-  
-        [team]: {
-          ...previous[team],
-          name: name,
+    function updateTeamName(
+        previous: GameState,
+        team: TeamKey,
+        name: string
+    ): GameState {
+        return {
+            ...previous,
+
+            [team]: {
+                ...previous[team],
+                name
+            }
         }
-      }))
     }
   
     function changeIsTimerRunning() {
@@ -146,7 +159,19 @@ function Scoreboard() {
     // #endregion
 
     // #region Scoring
-    function scorePoint(team: TeamKey, previous: GameState) {
+    function handleScorePoint(team: TeamKey) {
+        setGameState(previous =>
+            scorePoint(team, previous)
+        )
+    }
+
+    function handleRemovePoint(team: TeamKey) {
+        setGameState(previous =>
+            removePoint(team, previous)
+        )
+    }
+
+    function scorePoint(team: TeamKey, previous: GameState): GameState {
         const newState = {
             ...previous,
   
@@ -203,7 +228,7 @@ function Scoreboard() {
         }
     }
   
-    function removePoint(team: TeamKey, previous: GameState) {
+    function removePoint(team: TeamKey, previous: GameState): GameState {
       if (previous[team].score === 0) {
         return previous
       }
@@ -302,32 +327,46 @@ function Scoreboard() {
         }
     }
 
-    function handleScorePoint(team: TeamKey) {
+    function handleResetCurrentSet() {
         setGameState(previous =>
-            scorePoint(team, previous)
-        )
-    }
-
-    function handleRemovePoint(team: TeamKey) {
-        setGameState(previous =>
-            removePoint(team, previous)
+            resetCurrentSet(previous)
         )
     }
   
-    function resetScores() {
-      setGameState(previous => ({
-        ...previous,
-  
-        teamOne: {
-          ...previous.teamOne,
-          score: 0
-        },
-  
-        teamTwo: {
-          ...previous.teamTwo,
-          score: 0
+    function resetCurrentSet(previous: GameState) {
+        const newState = {
+            ...previous,
+    
+            teamOne: {
+            ...previous.teamOne,
+            score: 0
+            },
+    
+            teamTwo: {
+            ...previous.teamTwo,
+            score: 0
+            }
         }
-      }))
+
+        if (!previous.additionalFeatures.isMatchRecordingOn) {
+            return newState
+        }
+
+        return {
+            ...newState,
+
+            stats: {
+                ...newState.stats,
+
+                setsHistory: [
+                    ...newState.stats.setsHistory.slice(0, -1),
+                    {
+                    setNumber: newState.stats.setsHistory[newState.stats.setsHistory.length - 1].setNumber,
+                    pointsHistory: []
+                    }
+                ]
+            }
+        }
     }
 
     function requestResetMatch() {
@@ -375,58 +414,86 @@ function Scoreboard() {
 
         return newState
     }
-  
-    function increaseSets(team: TeamKey) {
-      setGameState(previous => ({
-        ...previous,
-  
-        [team]: {
-          ...previous[team],
-          setsWon: previous[team].setsWon + 1,
-        },
-      }));
+
+    function handleIncreaseSets(team: TeamKey) {
+        setGameState(previous =>
+            increaseSets(previous, team)
+        )
+    }
+
+    function handleDecreaseSets(team: TeamKey) {
+        setGameState(previous =>
+            decreaseSets(previous, team)
+        )
     }
   
-    function decreaseSets(team: TeamKey) {
-      if (gameState[team].setsWon === 0) {
-        return;
-      }
-      
-      setGameState(previous => ({
-        ...previous,
-  
-        [team]: {
-          ...previous[team],
-          setsWon: previous[team].setsWon - 1,
-        },
-      }));
+    function increaseSets(
+        previous: GameState,
+        team: TeamKey
+    ): GameState {
+        return {
+            ...previous,
+            [team]: {
+                ...previous[team],
+                setsWon: previous[team].setsWon + 1
+            }
+        }
     }
+  
+    function decreaseSets(
+        previous: GameState,
+        team: TeamKey
+    ): GameState {
+        if (previous[team].setsWon === 0) {
+            return previous
+        }
+
+        return {
+            ...previous,
+            [team]: {
+                ...previous[team],
+                setsWon: previous[team].setsWon - 1
+            }
+        }
+    }
+
     // #endregion
 
     // #region Automatic Rules
   
-    function toggleAutomaticRules() {
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-  
-          isAREnabled:
-            !previous.additionalFeatures.isAREnabled
-        }
-      }))
-    }
-
-    function handleToggleRecordMatch() {
+    function handleToggleAutomaticRules() {
         setGameState(previous =>
-            previous.additionalFeatures.isMatchRecordingOn
-                ? stopRecordMatch(previous)
-                : startRecordMatch(previous)
+            toggleAutomaticRules(previous)
         )
     }
 
-    function startRecordMatch(previous: GameState) {
+    function toggleAutomaticRules(
+        previous: GameState
+    ): GameState {
+        return {
+            ...previous,
+
+            additionalFeatures: {
+                ...previous.additionalFeatures,
+                isAREnabled:
+                    !previous.additionalFeatures.isAREnabled
+            }
+        }
+    }
+
+    function handleStartRecordMatch() {
+        setGameState(previous =>
+            startRecordMatch(previous)
+        )
+    }
+
+    function handleStopRecordMatch() {
+        setGameState(previous =>
+            stopRecordMatch(previous)
+        )
+    }
+
+    function startRecordMatch(previous: GameState): GameState {
         const setOne: SetHistory = {
                     setNumber: 1,
                     pointsHistory: []
@@ -468,7 +535,7 @@ function Scoreboard() {
         return newState    
     }
 
-    function stopRecordMatch(previous: GameState) {
+    function stopRecordMatch(previous: GameState): GameState {
         const newState = {
             ...previous,
 
@@ -484,82 +551,62 @@ function Scoreboard() {
 
         return newState
     }
-  
-    function increaseSetsToWin() {
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          setsToWin: previous.additionalFeatures.setsToWin + 1,
-        },
-      }));
+
+    function changeRule(
+        previous: GameState,
+        rule: RuleKey,
+        amount: number
+    ): GameState {
+        const currentValue =
+            previous.additionalFeatures[rule]
+
+        const newValue =
+            Math.max(0, currentValue + amount)
+
+        return {
+            ...previous,
+
+            additionalFeatures: {
+                ...previous.additionalFeatures,
+                [rule]: newValue
+            }
+        }
     }
-  
-    function decreaseSetsToWin() {
-      if (gameState.additionalFeatures.setsToWin === 0) {
-        return;
-      }
-  
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          setsToWin: previous.additionalFeatures.setsToWin - 1,
-        },
-      }));
+
+    function handleIncreaseSetsToWin() {
+        setGameState(previous =>
+            changeRule(previous, "setsToWin", 1)
+        )
     }
-  
-      function increaseSetLength() {
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          setLength: previous.additionalFeatures.setLength + 1,
-        },
-      }));
+
+    function handleDecreaseSetsToWin() {
+        setGameState(previous =>
+            changeRule(previous, "setsToWin", -1)
+        )
     }
-  
-    function decreaseSetLength() {
-      if (gameState.additionalFeatures.setLength === 0) {
-        return;
-      }
-      
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          setLength: previous.additionalFeatures.setLength - 1,
-        },
-      }));
+
+    function handleIncreaseSetLength() {
+        setGameState(previous =>
+            changeRule(previous, "setLength", 1)
+        )
     }
-      function increaseFinalSetLength() {
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          finalSetLength: previous.additionalFeatures.finalSetLength + 1,
-        },
-      }));
+
+    function handleDecreaseSetLength() {
+        setGameState(previous =>
+            changeRule(previous, "setLength", -1)
+        )
     }
-  
-    function decreaseFinalSetLength() {
-      if (gameState.additionalFeatures.finalSetLength === 0) {
-        return;
-      }
-      
-      setGameState(previous => ({
-        ...previous,
-  
-        additionalFeatures: {
-          ...previous.additionalFeatures,
-          finalSetLength: previous.additionalFeatures.finalSetLength - 1,
-        },
-      }));
+
+    function handleIncreaseFinalSetLength() {
+        setGameState(previous =>
+            changeRule(previous, "finalSetLength", 1)
+        )
+    }
+
+    function handleDecreaseFinalSetLength() {
+        setGameState(previous =>
+            changeRule(previous, "finalSetLength", -1)
+        )
     }
   
     function getCurrentSetLength(
@@ -673,19 +720,25 @@ function Scoreboard() {
             }
         }
     }
-  
-    async function saveGame(completedState: GameState) {
+
+    function buildGamePayload(completedState: GameState) {
         const dateTime = new Date()
 
-        const completedGame = {
+        return {
             teamOneName: completedState.teamOne.name,
             teamTwoName: completedState.teamTwo.name,
             teamOneSetsWon: completedState.teamOne.setsWon,
             teamTwoSetsWon: completedState.teamTwo.setsWon,
             date: dateTime.toLocaleDateString(),
             time: dateTime.toLocaleTimeString(),
-            stats: completedState.stats
+            stats: completedState.additionalFeatures.isMatchRecordingOn
+                ? completedState.stats
+                : { setsHistory: [] }
         }
+    }
+  
+    async function saveGame(completedState: GameState) {
+        const completedGame = buildGamePayload(completedState)
 
         const response = await fetch("http://localhost:3000/games", {
             method: "POST",
@@ -698,17 +751,9 @@ function Scoreboard() {
         const data = await response.json()
         console.log(data)
     }
-  
-    function endGame(
-        winningTeamKey: TeamKey,
-        completedState: GameState
-    ) {
-        saveGame(completedState)
 
-        const winningTeamName =
-            completedState[winningTeamKey].name
-
-        setGameState({
+    function finishMatchState(completedState: GameState): GameState {
+        return {
             ...completedState,
 
             teamOne: {
@@ -731,7 +776,22 @@ function Scoreboard() {
             stats: {
                 setsHistory: []
             }
-        })
+        }
+    }
+  
+    function endGame(
+        winningTeamKey: TeamKey,
+        completedState: GameState
+    ) {
+        saveGame(completedState)
+
+        const winningTeamName =
+            completedState[winningTeamKey].name
+
+        const finishedState =
+            finishMatchState(completedState)
+        
+        setGameState(finishedState)
 
         alert(`${winningTeamName} won the match! 🏐`)
     }
@@ -1023,7 +1083,7 @@ function Scoreboard() {
         <section className="scoreboard">
         <GameInfo 
         gameState={gameState}
-        updateTeamName={updateTeamName}
+        handleUpdateTeamName={handleUpdateTeamName}
         changeIsTimerRunning={changeIsTimerRunning}
         formatTimer={formatTimer}
         resetTimer={resetTimer}
@@ -1031,27 +1091,28 @@ function Scoreboard() {
         />
         <Teams
             gameState={gameState}
-            increaseScore={increaseScore}
-            decreaseScore={decreaseScore}
+            handleScorePoint={handleScorePoint}
+            handleRemovePoint={handleRemovePoint}
         />
         <SetSummary 
             gameState={gameState}
-            increaseSets={increaseSets}
-            decreaseSets={decreaseSets}
+            handleIncreaseSets={handleIncreaseSets}
+            handleDecreaseSets={handleDecreaseSets}
         />
         <AdditionalFeatures 
             gameState={gameState}
-            increaseSetsToWin={increaseSetsToWin}
-            decreaseSetsToWin={decreaseSetsToWin}
-            increaseSetLength={increaseSetLength}
-            decreaseSetLength={decreaseSetLength}
-            increaseFinalSetLength={increaseFinalSetLength}
-            decreaseFinalSetLength={decreaseFinalSetLength}
+            handleIncreaseSetsToWin={handleDecreaseSetsToWin}
+            handleDecreaseSetsToWin={handleDecreaseSetsToWin}
+            handleIncreaseSetLength={handleIncreaseSetLength}
+            handleDecreaseSetLength={handleDecreaseSetLength}
+            handleIncreaseFinalSetLength={handleIncreaseFinalSetLength}
+            handleDecreaseFinalSetLength={handleDecreaseFinalSetLength}
             saveGame={saveGame}
-            resetScores={resetScores}
+            handleResetCurrentSet={handleResetCurrentSet}
             requestResetMatch={requestResetMatch}
-            toggleAutomaticRules={toggleAutomaticRules}
-            toggleRecordMatch={toggleRecordMatch}
+            handleToggleAutomaticRules={handleToggleAutomaticRules}
+            handleStartRecordMatch={handleStartRecordMatch}
+            handleStopRecordMatch={handleStopRecordMatch}
         />
         </section>
     </main>
