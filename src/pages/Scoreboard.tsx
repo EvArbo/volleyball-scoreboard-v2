@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useReducer } from 'react'
 import type { GameState, TeamKey, SetHistory, PointCluster, RuleKey } from "../types"
 
 
@@ -8,8 +8,25 @@ import Teams from "../components/Teams.tsx"
 import GameInfo from '../components/GameInfo.tsx'
 
 
+type GameAction =
+    | { type: "UPDATE_TEAM_NAME"; team: TeamKey; name: string }
+    | { type: "SCORE_POINT"; team: TeamKey }
+    | { type: "REMOVE_POINT"; team: TeamKey }
+    | { type: "RESET_CURRENT_SET" }
+    | { type: "RESET_MATCH" }
+    | { type: "INCREASE_SETS"; team: TeamKey }
+    | { type: "DECREASE_SETS"; team: TeamKey }
+    | { type: "TOGGLE_AUTOMATIC_RULES" }
+    | { type: "START_RECORD_MATCH" }
+    | { type: "STOP_RECORD_MATCH" }
+    | { type: "CHANGE_RULE"; rule: RuleKey; amount: number }
+    | { type: "UPDATE_TIMER"; updates: Partial<GameState["timer"]> }
+    | { type: "TICK_TIMER" }
+    | { type: "FINISH_MATCH" }
+
+
 function Scoreboard() {
-  const [gameState, setGameState] = useState<GameState>({
+  const initialGameState: GameState = {
       teamOne: {
           name: "Team 1",
           score: 0,
@@ -35,7 +52,10 @@ function Scoreboard() {
       stats: {
         setsHistory: []
       }
-    });
+    };
+
+    const [gameState, dispatch] =
+        useReducer(gameReducer, initialGameState)
   
     const isEnteringTimer = useRef(false);
     const alarmOscillators = useRef<OscillatorNode[]>([]);
@@ -43,42 +63,13 @@ function Scoreboard() {
     const audioContext = useRef<AudioContext | null>(null);
   
   
-    useEffect(() => {
-        evaluateRules()
-      }, [
-        gameState.teamOne.score,
-        gameState.teamTwo.score,
-        gameState.teamOne.setsWon,
-        gameState.teamTwo.setsWon
-      ])
-  
       useEffect(() => {
       if (!gameState.timer.isTimerRunning) {
         return
       }
   
       const intervalId = setInterval(() => {
-        setGameState(previous => {
-          if (previous.timer.remainingSeconds <= 1) {
-            return {
-              ...previous,
-              timer: {
-                ...previous.timer,
-                remainingSeconds: 0,
-                isTimerRunning: false
-              },
-            }
-          }
-  
-          return {
-            ...previous,
-            timer: {
-              ...previous.timer,
-              remainingSeconds:
-                previous.timer.remainingSeconds - 1,
-            },
-          }
-        })
+        dispatch({ type: "TICK_TIMER" })
       }, 1000)
   
       return () => {
@@ -99,15 +90,90 @@ function Scoreboard() {
       gameState.timer.remainingSeconds,
     ])
 
+    function gameReducer(
+        state: GameState,
+        action: GameAction
+    ): GameState {
+        switch (action.type) {
+            case "UPDATE_TEAM_NAME":
+                return updateTeamName(state, action.team, action.name)
+
+            case "SCORE_POINT": {
+                const scoredState = scorePoint(state, action.team)
+                return resolveAutomaticRules(scoredState)
+            }
+
+            case "REMOVE_POINT":
+                return removePoint(state, action.team)
+
+            case "RESET_CURRENT_SET":
+                return resetCurrentSet(state)
+
+            case "RESET_MATCH":
+                return resetMatch(state)
+
+            case "INCREASE_SETS":
+                return increaseSets(state, action.team)
+
+            case "DECREASE_SETS":
+                return decreaseSets(state, action.team)
+
+            case "TOGGLE_AUTOMATIC_RULES":
+                return toggleAutomaticRules(state)
+
+            case "START_RECORD_MATCH":
+                return startRecordMatch(state)
+
+            case "STOP_RECORD_MATCH":
+                return stopRecordMatch(state)
+
+            case "CHANGE_RULE":
+                return changeRule(state, action.rule, action.amount)
+
+            case "UPDATE_TIMER":
+                return {
+                    ...state,
+                    timer: {
+                        ...state.timer,
+                        ...action.updates
+                    }
+                }
+
+            case "TICK_TIMER":
+                if (state.timer.remainingSeconds <= 1) {
+                    return {
+                        ...state,
+                        timer: {
+                            ...state.timer,
+                            remainingSeconds: 0,
+                            isTimerRunning: false
+                        }
+                    }
+                }
+
+                return {
+                    ...state,
+                    timer: {
+                        ...state.timer,
+                        remainingSeconds: state.timer.remainingSeconds - 1
+                    }
+                }
+
+            case "FINISH_MATCH":
+                return finishMatchState(state)
+
+            default:
+                return state
+        }
+    }
+
     // #region GameInfo
 
     function handleUpdateTeamName(
         team: TeamKey,
         name: string
     ) {
-        setGameState(previous =>
-            updateTeamName(previous, team, name)
-        )
+        dispatch({ type: "UPDATE_TEAM_NAME", team, name })
     }
   
     function updateTeamName(
@@ -129,49 +195,40 @@ function Scoreboard() {
       isEnteringTimer.current = false
       stopTimerSound()
   
-      setGameState(previous => {
-        const willStart = !previous.timer.isTimerRunning
-  
-        if (willStart && previous.timer.remainingSeconds <= 0) {
-          if (previous.timer.initialTimerSeconds <= 0) {
-            return previous
-          }
-  
-          return {
-            ...previous,
-            timer: {
-              ...previous.timer,
-              remainingSeconds: previous.timer.initialTimerSeconds,
-              isTimerRunning: true
-            },
-          }
+      const willStart = !gameState.timer.isTimerRunning
+
+      if (willStart && gameState.timer.remainingSeconds <= 0) {
+        if (gameState.timer.initialTimerSeconds <= 0) {
+          return
         }
-  
-        return {
-          ...previous,
-          timer: {
-            ...previous.timer,
-            isTimerRunning: willStart
-          },
-        }
+
+        dispatch({
+          type: "UPDATE_TIMER",
+          updates: {
+            remainingSeconds: gameState.timer.initialTimerSeconds,
+            isTimerRunning: true
+          }
+        })
+        return
+      }
+
+      dispatch({
+        type: "UPDATE_TIMER",
+        updates: { isTimerRunning: willStart }
       })
     }
     // #endregion
 
     // #region Scoring
     function handleScorePoint(team: TeamKey) {
-        setGameState(previous =>
-            scorePoint(team, previous)
-        )
+        dispatch({ type: "SCORE_POINT", team })
     }
 
     function handleRemovePoint(team: TeamKey) {
-        setGameState(previous =>
-            removePoint(team, previous)
-        )
+        dispatch({ type: "REMOVE_POINT", team })
     }
 
-    function scorePoint(team: TeamKey, previous: GameState): GameState {
+    function scorePoint(previous: GameState, team: TeamKey): GameState {
         const newState = {
             ...previous,
   
@@ -215,8 +272,6 @@ function Scoreboard() {
             }
         ]
 
-        console.log(newSetsHistory[newSetsHistory.length - 1].pointsHistory)
-
         return {
             ...newState,
 
@@ -228,7 +283,7 @@ function Scoreboard() {
         }
     }
   
-    function removePoint(team: TeamKey, previous: GameState): GameState {
+    function removePoint(previous: GameState, team: TeamKey): GameState {
       if (previous[team].score === 0) {
         return previous
       }
@@ -315,8 +370,6 @@ function Scoreboard() {
             ]
         }
 
-        console.log(newSetsHistory[newSetsHistory.length - 1].pointsHistory)
-
         return {
             ...newState,
 
@@ -328,9 +381,7 @@ function Scoreboard() {
     }
 
     function handleResetCurrentSet() {
-        setGameState(previous =>
-            resetCurrentSet(previous)
-        )
+        dispatch({ type: "RESET_CURRENT_SET" })
     }
   
     function resetCurrentSet(previous: GameState) {
@@ -383,9 +434,7 @@ function Scoreboard() {
     }
 
     function handleResetMatch() {
-        setGameState(previous =>
-            resetMatch(previous)
-        )
+        dispatch({ type: "RESET_MATCH" })
     }
   
     function resetMatch(previous: GameState) {
@@ -416,15 +465,11 @@ function Scoreboard() {
     }
 
     function handleIncreaseSets(team: TeamKey) {
-        setGameState(previous =>
-            increaseSets(previous, team)
-        )
+        dispatch({ type: "INCREASE_SETS", team })
     }
 
     function handleDecreaseSets(team: TeamKey) {
-        setGameState(previous =>
-            decreaseSets(previous, team)
-        )
+        dispatch({ type: "DECREASE_SETS", team })
     }
   
     function increaseSets(
@@ -462,9 +507,7 @@ function Scoreboard() {
     // #region Automatic Rules
   
     function handleToggleAutomaticRules() {
-        setGameState(previous =>
-            toggleAutomaticRules(previous)
-        )
+        dispatch({ type: "TOGGLE_AUTOMATIC_RULES" })
     }
 
     function toggleAutomaticRules(
@@ -482,15 +525,11 @@ function Scoreboard() {
     }
 
     function handleStartRecordMatch() {
-        setGameState(previous =>
-            startRecordMatch(previous)
-        )
+        dispatch({ type: "START_RECORD_MATCH" })
     }
 
     function handleStopRecordMatch() {
-        setGameState(previous =>
-            stopRecordMatch(previous)
-        )
+        dispatch({ type: "STOP_RECORD_MATCH" })
     }
 
     function startRecordMatch(previous: GameState): GameState {
@@ -574,39 +613,27 @@ function Scoreboard() {
     }
 
     function handleIncreaseSetsToWin() {
-        setGameState(previous =>
-            changeRule(previous, "setsToWin", 1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "setsToWin", amount: 1 })
     }
 
     function handleDecreaseSetsToWin() {
-        setGameState(previous =>
-            changeRule(previous, "setsToWin", -1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "setsToWin", amount: -1 })
     }
 
     function handleIncreaseSetLength() {
-        setGameState(previous =>
-            changeRule(previous, "setLength", 1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "setLength", amount: 1 })
     }
 
     function handleDecreaseSetLength() {
-        setGameState(previous =>
-            changeRule(previous, "setLength", -1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "setLength", amount: -1 })
     }
 
     function handleIncreaseFinalSetLength() {
-        setGameState(previous =>
-            changeRule(previous, "finalSetLength", 1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "finalSetLength", amount: 1 })
     }
 
     function handleDecreaseFinalSetLength() {
-        setGameState(previous =>
-            changeRule(previous, "finalSetLength", -1)
-        )
+        dispatch({ type: "CHANGE_RULE", rule: "finalSetLength", amount: -1 })
     }
   
     function getCurrentSetLength(
@@ -721,9 +748,7 @@ function Scoreboard() {
         }
     }
 
-    function buildGamePayload(completedState: GameState) {
-        const dateTime = new Date()
-
+    function buildGamePayload(completedState: GameState, dateTime: Date) {
         return {
             teamOneName: completedState.teamOne.name,
             teamTwoName: completedState.teamTwo.name,
@@ -738,7 +763,7 @@ function Scoreboard() {
     }
   
     async function saveGame(completedState: GameState) {
-        const completedGame = buildGamePayload(completedState)
+        const completedGame = buildGamePayload(completedState, new Date())
 
         const response = await fetch("http://localhost:3000/games", {
             method: "POST",
@@ -779,76 +804,20 @@ function Scoreboard() {
         }
     }
   
-    function endGame(
-        winningTeamKey: TeamKey,
-        completedState: GameState
-    ) {
-        saveGame(completedState)
-
-        const winningTeamName =
-            completedState[winningTeamKey].name
-
-        const finishedState =
-            finishMatchState(completedState)
-        
-        setGameState(finishedState)
-
-        alert(`${winningTeamName} won the match! 🏐`)
-    }
-  
-    function evaluateRules() {
-        if (
-            !gameState.additionalFeatures.isAREnabled
-        ) {
-            return
+    function resolveAutomaticRules(state: GameState): GameState {
+        if (!state.additionalFeatures.isAREnabled) {
+            return state
         }
 
-        const teamOneScore = gameState.teamOne.score
-        const teamTwoScore = gameState.teamTwo.score
-
-        let winningTeamKey: TeamKey | null = null
-
-        if (
-            hasWonSet(
-                teamOneScore,
-                teamTwoScore,
-                gameState
-            )
-        ) {
-            winningTeamKey = "teamOne"
-
-        } else if (
-            hasWonSet(
-                teamTwoScore,
-                teamOneScore,
-                gameState
-            )
-        ) {
-            winningTeamKey = "teamTwo"
+        if (hasWonSet(state.teamOne.score, state.teamTwo.score, state)) {
+            return endSet(state, "teamOne")
         }
 
-        if (winningTeamKey === null) {
-            return
+        if (hasWonSet(state.teamTwo.score, state.teamOne.score, state)) {
+            return endSet(state, "teamTwo")
         }
 
-        const completedSetState =
-            endSet(gameState, winningTeamKey)
-
-        const matchIsOver = hasWonGame(
-            completedSetState[winningTeamKey].setsWon,
-            completedSetState.additionalFeatures.setsToWin
-        )
-
-        if (matchIsOver) {
-            endGame(
-                winningTeamKey,
-                completedSetState
-            )
-
-            return
-        }
-
-        setGameState(completedSetState)
+        return state
     }
 
     // #
@@ -866,13 +835,7 @@ function Scoreboard() {
   function updateTimerState(
     updates: Partial<GameState["timer"]>
   ) {
-    setGameState(previous => ({
-      ...previous,
-      timer: {
-        ...previous.timer,
-        ...updates,
-      },
-    }))
+    dispatch({ type: "UPDATE_TIMER", updates })
   }
   
     function resetTimer() {
@@ -1003,14 +966,13 @@ function Scoreboard() {
   }
   
   function setTimerSeconds(seconds: number) {
-    setGameState(previous => ({
-      ...previous,
-      timer: {
-        ...previous.timer,
+    dispatch({
+      type: "UPDATE_TIMER",
+      updates: {
         initialTimerSeconds: seconds,
-        remainingSeconds: seconds,
-      },
-    }))
+        remainingSeconds: seconds
+      }
+    })
   }
   
   function handleTimerKeydown(event) {
@@ -1101,7 +1063,7 @@ function Scoreboard() {
         />
         <AdditionalFeatures 
             gameState={gameState}
-            handleIncreaseSetsToWin={handleDecreaseSetsToWin}
+            handleIncreaseSetsToWin={handleIncreaseSetsToWin}
             handleDecreaseSetsToWin={handleDecreaseSetsToWin}
             handleIncreaseSetLength={handleIncreaseSetLength}
             handleDecreaseSetLength={handleDecreaseSetLength}
