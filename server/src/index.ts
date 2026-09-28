@@ -67,16 +67,14 @@ app.post('/games', async (req: Request, res: Response) => {
 });
 
 app.get('/games', async (req: Request, res: Response) => {
-    console.log(req.body)
-
     const result = await pool.query(
     `
     SELECT 
         id,
-        team_one_name,
-        team_two_name,
-        team_one_sets_won,
-        team_two_sets_won,
+        team_one_name AS "teamOneName",
+        team_two_name AS "teamTwoName",
+        team_one_sets_won AS "teamOneSetsWon",
+        team_two_sets_won AS "teamTwoSetsWon",
         date,
         time,
         stats
